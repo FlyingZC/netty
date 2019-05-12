@@ -79,7 +79,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * {@link Channel}
      */
     public B group(EventLoopGroup group) {
-        if (group == null) {
+        if (group == null) {// group属性就是用于处理I/O事件的事件循环组
             throw new NullPointerException("group");
         }
         if (this.group != null) {
@@ -99,11 +99,11 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * You either use this or {@link #channelFactory(io.netty.channel.ChannelFactory)} if your
      * {@link Channel} implementation has no no-args constructor.
      */
-    public B channel(Class<? extends C> channelClass) {
+    public B channel(Class<? extends C> channelClass) {// 配置连接通道类 和 工厂对象
         if (channelClass == null) {
             throw new NullPointerException("channelClass");
         }
-        return channelFactory(new ReflectiveChannelFactory<C>(channelClass));
+        return channelFactory(new ReflectiveChannelFactory<C>(channelClass));// 默认创建的 channelFactory是 ReflectiveChannelFactory
     }
 
     /**
@@ -167,7 +167,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * Allow to specify a {@link ChannelOption} which is used for the {@link Channel} instances once they got
      * created. Use a value of {@code null} to remove a previous set {@link ChannelOption}.
      */
-    public <T> B option(ChannelOption<T> option, T value) {
+    public <T> B option(ChannelOption<T> option, T value) {// ChannelOption是通道选项对象,对通道的属性和行为进行定制的一种方式
         if (option == null) {
             throw new NullPointerException("option");
         }
@@ -177,7 +177,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             }
         } else {
             synchronized (options) {
-                options.put(option, value);
+                options.put(option, value);// 设置到 options中
             }
         }
         return self();
@@ -267,7 +267,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         return bind(new InetSocketAddress(inetHost, inetPort));
     }
 
-    /**
+    /** 服务端启动器绑定一个端口号，启动ServerChannel，等待客户端的连接
      * Create a new {@link Channel} and bind it.
      */
     public ChannelFuture bind(SocketAddress localAddress) {
@@ -317,9 +317,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
-            channel = channelFactory.newChannel();
+            channel = channelFactory.newChannel();// 创建 socketChannel,如 NioSocketChannel
             init(channel);
-        } catch (Throwable t) {
+        } catch (Throwable t) {// 异常处理当实例化 或者 初始化抛出异常 的情况下则 关闭通道并且返回一个失败状态的ChannelFuture对象
             if (channel != null) {
                 // channel can be null if newChannel crashed (eg SocketException("too many open files"))
                 channel.unsafe().closeForcibly();
@@ -330,8 +330,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
-        ChannelFuture regFuture = config().group().register(channel);
-        if (regFuture.cause() != null) {
+        ChannelFuture regFuture = config().group().register(channel);// 将初始化过的连接通道注册到配置的 EventLoopGroup对象上,返回 ChannelFuture对象
+        if (regFuture.cause() != null) {// 注册失败则关闭连接通道
             if (channel.isRegistered()) {
                 channel.close();
             } else {
@@ -348,7 +348,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         //         because bind() or connect() will be executed *after* the scheduled registration task is executed
         //         because register(), bind(), and connect() are all bound to the same thread.
 
-        return regFuture;
+        return regFuture;// 返回一个regFutre对象，表示未来注册的结果。如果成功了则表示已经注册成功
     }
 
     abstract void init(Channel channel) throws Exception;

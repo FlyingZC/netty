@@ -77,8 +77,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * {@link EventLoopGroup}'s are used to handle all the events and IO for {@link ServerChannel} and
      * {@link Channel}'s.
      */
-    public ServerBootstrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup) {
-        super.group(parentGroup);
+    public ServerBootstrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup) {// ServerBootstrap有两个group属性,特意分开就是将两者相互隔离，避免相互干扰
+        super.group(parentGroup);// parentGroup负责处理 ServerChannel（接收客户端连接通道）的I/O事件.  chidGroup则是用于处理 Channel（客户端连接通道）的I/O事件。
         if (childGroup == null) {
             throw new NullPointerException("childGroup");
         }

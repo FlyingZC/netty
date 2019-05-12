@@ -160,7 +160,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      * @see #connect()
      */
     private ChannelFuture doResolveAndConnect(final SocketAddress remoteAddress, final SocketAddress localAddress) {
-        final ChannelFuture regFuture = initAndRegister();
+        final ChannelFuture regFuture = initAndRegister();// 初始化和注册,返回 ChannelFuture,不会阻塞
         final Channel channel = regFuture.channel();
 
         if (regFuture.isDone()) {
@@ -194,34 +194,34 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     }
 
     private ChannelFuture doResolveAndConnect0(final Channel channel, SocketAddress remoteAddress,
-                                               final SocketAddress localAddress, final ChannelPromise promise) {
+                                               final SocketAddress localAddress, final ChannelPromise promise) {// 解析和连接
         try {
-            final EventLoop eventLoop = channel.eventLoop();
-            final AddressResolver<SocketAddress> resolver = this.resolver.getResolver(eventLoop);
+            final EventLoop eventLoop = channel.eventLoop();// 获得了当前 Channel绑定的一个 eventloop对象
+            final AddressResolver<SocketAddress> resolver = this.resolver.getResolver(eventLoop);// 获得当前 eventloop对象绑定的一个地址解析器对象
 
-            if (!resolver.isSupported(remoteAddress) || resolver.isResolved(remoteAddress)) {
+            if (!resolver.isSupported(remoteAddress) || resolver.isResolved(remoteAddress)) {// 若地址解析器不支持 或 已经解析过，则直接使用该远程地址进行连接
                 // Resolver has no idea about what to do with the specified remote address or it's resolved already.
                 doConnect(remoteAddress, localAddress, promise);
                 return promise;
             }
 
-            final Future<SocketAddress> resolveFuture = resolver.resolve(remoteAddress);
+            final Future<SocketAddress> resolveFuture = resolver.resolve(remoteAddress);// 使用地址解析器对远程地址进行解析
 
-            if (resolveFuture.isDone()) {
+            if (resolveFuture.isDone()) {// 如果解析器正好解析完成，则判断解析结果
                 final Throwable resolveFailureCause = resolveFuture.cause();
 
-                if (resolveFailureCause != null) {
+                if (resolveFailureCause != null) {// 如果解析抛出异常则关闭连接，设置状态是失败
                     // Failed to resolve immediately
                     channel.close();
                     promise.setFailure(resolveFailureCause);
-                } else {
+                } else {// 如果解析成功则进行连接操作
                     // Succeeded to resolve immediately; cached? (or did a blocking lookup)
                     doConnect(resolveFuture.getNow(), localAddress, promise);
                 }
                 return promise;
             }
 
-            // Wait until the name resolution is finished.
+            // Wait until the name resolution is finished.如果未来才会解析完成，则添加一个监听器，监听未来监听的事件
             resolveFuture.addListener(new FutureListener<SocketAddress>() {
                 @Override
                 public void operationComplete(Future<SocketAddress> future) throws Exception {
@@ -244,7 +244,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
 
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
         // the pipeline in its channelRegistered() implementation.
-        final Channel channel = connectPromise.channel();
+        final Channel channel = connectPromise.channel();// 将连接这种 可能阻塞的操作 异步化
         channel.eventLoop().execute(new Runnable() {
             @Override
             public void run() {
@@ -260,19 +260,19 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
 
     @Override
     @SuppressWarnings("unchecked")
-    void init(Channel channel) throws Exception {
+    void init(Channel channel) throws Exception {// 对 Channel进行初始化
         ChannelPipeline p = channel.pipeline();
-        p.addLast(config.handler());
+        p.addLast(config.handler());// pipeline添加 handler
 
         final Map<ChannelOption<?>, Object> options = options0();
         synchronized (options) {
-            setChannelOptions(channel, options, logger);
+            setChannelOptions(channel, options, logger);// 将用户配置的选项列表设置到通道对象中
         }
 
         final Map<AttributeKey<?>, Object> attrs = attrs0();
         synchronized (attrs) {
             for (Entry<AttributeKey<?>, Object> e: attrs.entrySet()) {
-                channel.attr((AttributeKey<Object>) e.getKey()).set(e.getValue());
+                channel.attr((AttributeKey<Object>) e.getKey()).set(e.getValue());// 将用户配置的属性类型设置到通道对象中
             }
         }
     }
