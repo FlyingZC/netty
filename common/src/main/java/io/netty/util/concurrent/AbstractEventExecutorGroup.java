@@ -31,7 +31,7 @@ import static io.netty.util.concurrent.AbstractEventExecutor.*;
  */
 public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
     @Override
-    public Future<?> submit(Runnable task) {
+    public Future<?> submit(Runnable task) {// 所有实现都是调用 next.xxx() 交由一个线程进行处理
         return next().submit(task);
     }
 

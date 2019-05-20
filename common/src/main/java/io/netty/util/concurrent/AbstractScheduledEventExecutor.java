@@ -37,7 +37,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
                     return o1.compareTo(o2);
                 }
             };
-
+    // 存放任务的队列
     PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue;
 
     protected AbstractScheduledEventExecutor() {
@@ -46,7 +46,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     protected AbstractScheduledEventExecutor(EventExecutorGroup parent) {
         super(parent);
     }
-
+    // 返回当前时间(相对时间)
     protected static long nanoTime() {
         return ScheduledFutureTask.nanoTime();
     }
@@ -87,7 +87,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         scheduledTaskQueue.clearIgnoringIndexes();
     }
 
-    /**
+    /** 取得并移除截止时间大于 nanoTime的下一个调度任务
      * @see #pollScheduledTask(long)
      */
     protected final Runnable pollScheduledTask() {
@@ -114,7 +114,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return null;
     }
 
-    /**
+    /**  取得距离下一个调度任务执行的间隔时间
      * Return the nanoseconds when the next scheduled task is ready to be run or {@code -1} if no task is scheduled.
      */
     protected final long nextScheduledTaskNano() {
@@ -126,7 +126,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return Math.max(0, scheduledTask.deadlineNanos() - nanoTime());
     }
 
-    final ScheduledFutureTask<?> peekScheduledTask() {
+    final ScheduledFutureTask<?> peekScheduledTask() {// 获取但并不移除下一个调度任务
         Queue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
         if (scheduledTaskQueue == null) {
             return null;
@@ -134,7 +134,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return scheduledTaskQueue.peek();
     }
 
-    /**
+    /**  是否有将要执行的调度任务
      * Returns {@code true} if a scheduled task is ready for processing.
      */
     protected final boolean hasScheduledTasks() {
@@ -227,9 +227,9 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
 
     <V> ScheduledFuture<V> schedule(final ScheduledFutureTask<V> task) {
         if (inEventLoop()) {
-            scheduledTaskQueue().add(task);
+            scheduledTaskQueue().add(task);// 原生线程直接向任务队列添加
         } else {
-            execute(new Runnable() {
+            execute(new Runnable() {// 其他线程则提交一个添加调度任务的任务
                 @Override
                 public void run() {
                     scheduledTaskQueue().add(task);
@@ -240,7 +240,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return task;
     }
 
-    final void removeScheduled(final ScheduledFutureTask<?> task) {
+    final void removeScheduled(final ScheduledFutureTask<?> task) {// 删除一个调度任务
         if (inEventLoop()) {
             scheduledTaskQueue().removeTyped(task);
         } else {

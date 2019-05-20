@@ -18,11 +18,11 @@ package io.netty.util.concurrent;
 
 import java.util.concurrent.TimeUnit;
 
-/**
+/** 表示一个异步操作 已完成 的结果
  * A skeletal {@link Future} implementation which represents a {@link Future} which has been completed already.
  */
 public abstract class CompleteFuture<V> extends AbstractFuture<V> {
-
+    // 执行器，执行Listener中定义的操作
     private final EventExecutor executor;
 
     /**
@@ -59,7 +59,7 @@ public abstract class CompleteFuture<V> extends AbstractFuture<V> {
             if (l == null) {
                 break;
             }
-            DefaultPromise.notifyListener(executor(), this, l);
+            DefaultPromise.notifyListener(executor(), this, l);// 由于这是一个已完成的 Future，所以立即通知 Listener执行
         }
         return this;
     }
@@ -67,7 +67,7 @@ public abstract class CompleteFuture<V> extends AbstractFuture<V> {
     @Override
     public Future<V> removeListener(GenericFutureListener<? extends Future<? super V>> listener) {
         // NOOP
-        return this;
+        return this;// 由于已完成，Listener中的操作已完成，没有需要删除的 Listener
     }
 
     @Override
@@ -77,7 +77,7 @@ public abstract class CompleteFuture<V> extends AbstractFuture<V> {
     }
 
     @Override
-    public Future<V> await() throws InterruptedException {
+    public Future<V> await() throws InterruptedException {// 由于 CompleteFuture 表示一个已完成的异步操作，所以可推知 sync()和 await()方法都将立即返回
         if (Thread.interrupted()) {
             throw new InterruptedException();
         }

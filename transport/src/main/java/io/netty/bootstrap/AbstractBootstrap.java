@@ -330,7 +330,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
-        ChannelFuture regFuture = config().group().register(channel);// 将初始化过的连接通道注册到配置的 EventLoopGroup对象上,返回 ChannelFuture对象
+        ChannelFuture regFuture = config().group().register(channel);// 将初始化过的 NioServerSocketChannel 注册到配置的 EventLoopGroup对象上,返回 ChannelFuture对象
         if (regFuture.cause() != null) {// 注册失败则关闭连接通道
             if (channel.isRegistered()) {
                 channel.close();

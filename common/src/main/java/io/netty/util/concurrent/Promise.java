@@ -15,12 +15,12 @@
  */
 package io.netty.util.concurrent;
 
-/**
+/** Promise接口继承自 io.netty.util.concurrent.Future接口
  * Special {@link Future} which is writable.
  */
 public interface Promise<V> extends Future<V> {
 
-    /**
+    /** 标记该 future 成功及设置其执行结果，并且会通知所有的 listeners
      * Marks this future as a success and notifies all
      * listeners.
      *
@@ -28,7 +28,7 @@ public interface Promise<V> extends Future<V> {
      */
     Promise<V> setSuccess(V result);
 
-    /**
+    /** 和 setSuccess 方法一样，只不过如果失败，它不抛异常，返回 false
      * Marks this future as a success and notifies all
      * listeners.
      *
@@ -38,7 +38,7 @@ public interface Promise<V> extends Future<V> {
      */
     boolean trySuccess(V result);
 
-    /**
+    /** 标记该 future 失败，及其失败原因.失败会抛异常
      * Marks this future as a failure and notifies all
      * listeners.
      *
@@ -46,7 +46,7 @@ public interface Promise<V> extends Future<V> {
      */
     Promise<V> setFailure(Throwable cause);
 
-    /**
+    /** 标记该 future 失败，及其失败原因.不抛异常
      * Marks this future as a failure and notifies all
      * listeners.
      *
@@ -56,14 +56,14 @@ public interface Promise<V> extends Future<V> {
      */
     boolean tryFailure(Throwable cause);
 
-    /**
+    /** 标记该 future 不可以被取消
      * Make this future impossible to cancel.
      *
      * @return {@code true} if and only if successfully marked this future as uncancellable or it is already done
      *         without being cancelled.  {@code false} if this future has been cancelled already.
      */
     boolean setUncancellable();
-
+    // 覆写返回 Promise实例
     @Override
     Promise<V> addListener(GenericFutureListener<? extends Future<? super V>> listener);
 

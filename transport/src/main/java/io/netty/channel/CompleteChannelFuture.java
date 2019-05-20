@@ -20,7 +20,7 @@ import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
-/**
+/** CompleteChannelFuture纯粹的视为一种回调函数机制
  * A skeletal {@link ChannelFuture} implementation which represents a
  * {@link ChannelFuture} which has been completed already.
  */
@@ -45,7 +45,7 @@ abstract class CompleteChannelFuture extends CompleteFuture<Void> implements Cha
     protected EventExecutor executor() {
         EventExecutor e = super.executor();
         if (e == null) {
-            return channel().eventLoop();
+            return channel().eventLoop();// 构造方法未指定使用 channel注册到的 eventLoop
         } else {
             return e;
         }

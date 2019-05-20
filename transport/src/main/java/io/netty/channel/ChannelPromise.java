@@ -19,7 +19,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
 
-/**
+/** 继承自 ChannelFuture和 Promise接口
  * Special {@link ChannelFuture} which is writable.
  */
 public interface ChannelPromise extends ChannelFuture, Promise<Void> {
@@ -33,7 +33,7 @@ public interface ChannelPromise extends ChannelFuture, Promise<Void> {
     ChannelPromise setSuccess();
 
     boolean trySuccess();
-
+    // 覆写将返回值都变为 ChannelPromise
     @Override
     ChannelPromise setFailure(Throwable cause);
 

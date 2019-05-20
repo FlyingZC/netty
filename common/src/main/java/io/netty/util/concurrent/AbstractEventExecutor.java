@@ -58,7 +58,7 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
     }
 
     @Override
-    public boolean inEventLoop() {
+    public boolean inEventLoop() {// 判断当前线程是否是 EventExecutor原生线程
         return inEventLoop(Thread.currentThread());
     }
 
@@ -90,7 +90,7 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
     }
 
     @Override
-    public <V> Promise<V> newPromise() {
+    public <V> Promise<V> newPromise() {// 创建异步结果的方法
         return new DefaultPromise<V>(this);
     }
 
@@ -110,7 +110,7 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
     }
 
     @Override
-    public Future<?> submit(Runnable task) {
+    public Future<?> submit(Runnable task) {// 用 Netty的 Future对象覆盖了 subimt()方法的返回值(原本为 JDK的 Future)
         return (Future<?>) super.submit(task);
     }
 
@@ -126,7 +126,7 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
 
     @Override
     protected final <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
-        return new PromiseTask<T>(this, runnable, value);
+        return new PromiseTask<T>(this, runnable, value);// 使用 Netty的 PromiseTask代替 JDK的 FutureTask
     }
 
     @Override

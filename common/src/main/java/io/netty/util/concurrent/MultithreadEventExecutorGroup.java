@@ -24,17 +24,17 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
+/** 实现了线程的创建和线程的选择
  * Abstract base class for {@link EventExecutorGroup} implementations that handles their tasks with multiple threads at
  * the same time.
  */
 public abstract class MultithreadEventExecutorGroup extends AbstractEventExecutorGroup {
-
+    // 线程池，数组形式可知为固定线程池
     private final EventExecutor[] children;
     private final Set<EventExecutor> readonlyChildren;
-    private final AtomicInteger terminatedChildren = new AtomicInteger();
-    private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);
-    private final EventExecutorChooserFactory.EventExecutorChooser chooser;
+    private final AtomicInteger terminatedChildren = new AtomicInteger();// 终止的线程个数
+    private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);// 线程池终止时的异步结果
+    private final EventExecutorChooserFactory.EventExecutorChooser chooser;// 线程选择器
 
     /**
      * Create a new instance.
@@ -61,9 +61,9 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     /**
      * Create a new instance.
      *
-     * @param nThreads          the number of threads that will be used by this instance.
+     * @param nThreads          the number of threads that will be used by this instance.线程数
      * @param executor          the Executor to use, or {@code null} if the default should be used.
-     * @param chooserFactory    the {@link EventExecutorChooserFactory} to use.
+     * @param chooserFactory    the {@link EventExecutorChooserFactory} to use.线程选择器
      * @param args              arguments which will passed to each {@link #newChild(Executor, Object...)} call
      */
     protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
@@ -81,18 +81,18 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
-                children[i] = newChild(executor, args);
+                children[i] = newChild(executor, args);// 创建线程池中的线程,其实创建的是 NioEventLoop实例
                 success = true;
             } catch (Exception e) {
                 // TODO: Think about if this is a good exception type
                 throw new IllegalStateException("failed to create a child event loop", e);
             } finally {
-                if (!success) {
-                    for (int j = 0; j < i; j ++) {
+                if (!success) {// 只要有一个 child没有实例化成功,就会走这里失败处理逻辑
+                    for (int j = 0; j < i; j ++) {// 把已经成功实例化的"线程" shutdown，shutdown 是异步操作
                         children[j].shutdownGracefully();
                     }
 
-                    for (int j = 0; j < i; j ++) {
+                    for (int j = 0; j < i; j ++) {// 等待这些线程成功 shutdown
                         EventExecutor e = children[j];
                         try {
                             while (!e.isTerminated()) {
@@ -100,26 +100,26 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                             }
                         } catch (InterruptedException interrupted) {
                             // Let the caller handle the interruption.
-                            Thread.currentThread().interrupt();
+                            Thread.currentThread().interrupt();// 把中断状态设置回去，交给关心的线程来处理
                             break;
                         }
                     }
                 }
             }
         }
-
+        // 设置 chooserFactory，用来实现从线程池中选择一个线程的选择策略
         chooser = chooserFactory.newChooser(children);
-
+        // 设置一个 Listener 用来监听该线程池的 termination 事件
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
             public void operationComplete(Future<Object> future) throws Exception {
-                if (terminatedChildren.incrementAndGet() == children.length) {
+                if (terminatedChildren.incrementAndGet() == children.length) {// 线程池中的线程每终止一个增加记录数,直到全部终止设置线程池异步终止结果为成功
                     terminationFuture.setSuccess(null);
                 }
             }
         };
 
-        for (EventExecutor e: children) {
+        for (EventExecutor e: children) {// 给池中每一个线程都设置这个 listener，当监听到所有线程都 terminate 以后，这个线程池就算真正的 terminate 了。
             e.terminationFuture().addListener(terminationListener);
         }
 
@@ -134,7 +134,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
     @Override
     public EventExecutor next() {
-        return chooser.next();
+        return chooser.next();// 通过 chooser从线程池中 选择一个线程
     }
 
     @Override

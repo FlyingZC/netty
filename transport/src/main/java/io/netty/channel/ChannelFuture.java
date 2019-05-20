@@ -23,7 +23,7 @@ import io.netty.util.concurrent.GenericFutureListener;
 import java.util.concurrent.TimeUnit;
 
 
-/**
+/** 将 Future和 IO 操作中的 Channel 关联在一起了，用于异步处理 Channel 中的事件
  * The result of an asynchronous {@link Channel} I/O operation.
  * <p>
  * All I/O operations in Netty are asynchronous.  It means any I/O calls will
@@ -164,7 +164,7 @@ import java.util.concurrent.TimeUnit;
  */
 public interface ChannelFuture extends Future<Void> {
 
-    /**
+    /** ChannelFuture 关联的 Channel
      * Returns a channel where the I/O operation associated with this
      * future takes place.
      */

@@ -29,16 +29,16 @@ public abstract class AbstractFuture<V> implements Future<V> {
 
     @Override
     public V get() throws InterruptedException, ExecutionException {
-        await();
+        await();// 阻塞直到异步操作完成
 
         Throwable cause = cause();
         if (cause == null) {
-            return getNow();
+            return getNow();// 成功则返回关联结果
         }
-        if (cause instanceof CancellationException) {
+        if (cause instanceof CancellationException) {// 由用户取消
             throw (CancellationException) cause;
         }
-        throw new ExecutionException(cause);
+        throw new ExecutionException(cause);// 失败抛出异常
     }
 
     @Override

@@ -93,7 +93,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         this.channel = ObjectUtil.checkNotNull(channel, "channel");
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
-
+        // 实例化了 tail 和 head 这两个 handler,并建立关联
         tail = new TailContext(this);
         head = new HeadContext(this);
 
@@ -199,7 +199,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
-            checkMultiplicity(handler);
+            checkMultiplicity(handler);// 查重
 
             newCtx = newContext(group, filterName(name, handler), handler);
 
@@ -224,7 +224,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return this;
     }
 
-    private void addLast0(AbstractChannelHandlerContext newCtx) {
+    private void addLast0(AbstractChannelHandlerContext newCtx) {// 插入到 tail之前
         AbstractChannelHandlerContext prev = tail.prev;
         newCtx.prev = prev;
         newCtx.next = tail;
