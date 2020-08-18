@@ -86,7 +86,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             throw new IllegalStateException("group set already");
         }
         this.group = group;
-        return self();
+        return self(); // 返回当前对象,链式调用
     }
 
     @SuppressWarnings("unchecked")
@@ -118,7 +118,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             throw new IllegalStateException("channelFactory set already");
         }
 
-        this.channelFactory = channelFactory;
+        this.channelFactory = channelFactory; // 将channelFactory设置到BootStrap中
         return self();
     }
 
@@ -171,13 +171,13 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         if (option == null) {
             throw new NullPointerException("option");
         }
-        if (value == null) {
+        if (value == null) { // 若传入的值为null,则代表移除属性
             synchronized (options) {
                 options.remove(option);
             }
         } else {
             synchronized (options) {
-                options.put(option, value);// 设置到 options中
+                options.put(option, value); // 设置属性到 options 中
             }
         }
         return self();
