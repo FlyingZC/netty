@@ -313,13 +313,13 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return promise;
         }
     }
-
+    /** 初始化 和 注册 */
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
-            channel = channelFactory.newChannel();// 创建 socketChannel,如 NioSocketChannel
-            init(channel);
-        } catch (Throwable t) {// 异常处理当实例化 或者 初始化抛出异常 的情况下则 关闭通道并且返回一个失败状态的ChannelFuture对象
+            channel = channelFactory.newChannel();// 通过 channelFactory 创建 socketChannel,如 NioSocketChannel
+            init(channel); // channel 初始化
+        } catch (Throwable t) {// 异常处理当实例化 或者 初始化抛出异常 的情况下则 关闭通道并且返回一个失败状态的 ChannelFuture 对象
             if (channel != null) {
                 // channel can be null if newChannel crashed (eg SocketException("too many open files"))
                 channel.unsafe().closeForcibly();
@@ -348,7 +348,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         //         because bind() or connect() will be executed *after* the scheduled registration task is executed
         //         because register(), bind(), and connect() are all bound to the same thread.
 
-        return regFuture;// 返回一个regFutre对象，表示未来注册的结果。如果成功了则表示已经注册成功
+        return regFuture;// 返回一个regFutre对象，表示未来注册的结果。如果成功了则表示已经注册成功,外层方法会根据这个结果进行后续处理
     }
 
     abstract void init(Channel channel) throws Exception;

@@ -136,13 +136,13 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     /**
      * Connect a {@link Channel} to the remote peer.
      */
-    public ChannelFuture connect(SocketAddress remoteAddress) {
+    public ChannelFuture connect(SocketAddress remoteAddress) { // remoteAddress : 远程服务器端的地址
         if (remoteAddress == null) {
             throw new NullPointerException("remoteAddress");
         }
 
         validate();
-        return doResolveAndConnect(remoteAddress, config.localAddress());
+        return doResolveAndConnect(remoteAddress, config.localAddress()); // 解析地址 并 连接
     }
 
     /**
@@ -156,72 +156,72 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
         return doResolveAndConnect(remoteAddress, localAddress);
     }
 
-    /**
+    /** 解析 并 连接
      * @see #connect()
      */
     private ChannelFuture doResolveAndConnect(final SocketAddress remoteAddress, final SocketAddress localAddress) {
-        final ChannelFuture regFuture = initAndRegister();// 初始化和注册,返回 ChannelFuture,不会阻塞
-        final Channel channel = regFuture.channel();
+        final ChannelFuture regFuture = initAndRegister(); // 初始化和注册,返回 ChannelFuture,不会阻塞
+        final Channel channel = regFuture.channel(); // 从 ChannelFuture 对象中获取初始化的 Channel 对象
 
-        if (regFuture.isDone()) {
-            if (!regFuture.isSuccess()) {
+        if (regFuture.isDone()) { // 判断 ChannelFuture 对象是否已经完成
+            if (!regFuture.isSuccess()) { // 注册失败
                 return regFuture;
             }
-            return doResolveAndConnect0(channel, remoteAddress, localAddress, channel.newPromise());
-        } else {
+            return doResolveAndConnect0(channel, remoteAddress, localAddress, channel.newPromise()); // 注册成功的后续逻辑
+        } else { // 若未完成则给 ChannelFuture 对象添加监听器,当事件到达的时候执行 响应处理
             // Registration future is almost always fulfilled already, but just in case it's not.
-            final PendingRegistrationPromise promise = new PendingRegistrationPromise(channel);
-            regFuture.addListener(new ChannelFutureListener() {
+            final PendingRegistrationPromise promise = new PendingRegistrationPromise(channel); // 创建 PendingRegistrationPromise 对象,将 Channel 放入该对象中
+            regFuture.addListener(new ChannelFutureListener() { // 添加一个监听器
                 @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
+                public void operationComplete(ChannelFuture future) throws Exception { // 监听操作完成事件 operationComplete
                     // Directly obtain the cause and do a null check so we only need one volatile read in case of a
                     // failure.
                     Throwable cause = future.cause();
-                    if (cause != null) {
+                    if (cause != null) { // 判断若操作完成的时候有异常
                         // Registration on the EventLoop failed so fail the ChannelPromise directly to not cause an
                         // IllegalStateException once we try to access the EventLoop of the Channel.
-                        promise.setFailure(cause);
+                        promise.setFailure(cause); // 则设置 PendingRegistrationPromise 为失败
                     } else {
                         // Registration was successful, so set the correct executor to use.
                         // See https://github.com/netty/netty/issues/2586
-                        promise.registered();
-                        doResolveAndConnect0(channel, remoteAddress, localAddress, promise);
+                        promise.registered(); // 若执行成功,则设置 PendingRegistrationPromise 为注册成功
+                        doResolveAndConnect0(channel, remoteAddress, localAddress, promise); // 调用 doResolveAndConnect0() 方法
                     }
                 }
             });
             return promise;
         }
     }
-
+    /** 解析 和 连接 */
     private ChannelFuture doResolveAndConnect0(final Channel channel, SocketAddress remoteAddress,
-                                               final SocketAddress localAddress, final ChannelPromise promise) {// 解析和连接
+                                               final SocketAddress localAddress, final ChannelPromise promise) {
         try {
-            final EventLoop eventLoop = channel.eventLoop();// 获得了当前 Channel绑定的一个 eventloop对象
-            final AddressResolver<SocketAddress> resolver = this.resolver.getResolver(eventLoop);// 获得当前 eventloop对象绑定的一个地址解析器对象
+            final EventLoop eventLoop = channel.eventLoop(); // 获得了当前 Channel 绑定的一个 eventLoop 对象
+            final AddressResolver<SocketAddress> resolver = this.resolver.getResolver(eventLoop); // 获得当前 eventLoop 对象绑定的一个地址解析器对象
 
-            if (!resolver.isSupported(remoteAddress) || resolver.isResolved(remoteAddress)) {// 若地址解析器不支持 或 已经解析过，则直接使用该远程地址进行连接
+            if (!resolver.isSupported(remoteAddress) || resolver.isResolved(remoteAddress)) { // 若地址解析器不支持 或 已经解析过,则直接使用该远程地址进行连接
                 // Resolver has no idea about what to do with the specified remote address or it's resolved already.
                 doConnect(remoteAddress, localAddress, promise);
                 return promise;
             }
 
-            final Future<SocketAddress> resolveFuture = resolver.resolve(remoteAddress);// 使用地址解析器对远程地址进行解析
+            final Future<SocketAddress> resolveFuture = resolver.resolve(remoteAddress); // 使用地址解析器对远程地址进行解析
 
-            if (resolveFuture.isDone()) {// 如果解析器正好解析完成，则判断解析结果
+            if (resolveFuture.isDone()) { // 如果解析器正好解析完成,则判断解析结果
                 final Throwable resolveFailureCause = resolveFuture.cause();
 
-                if (resolveFailureCause != null) {// 如果解析抛出异常则关闭连接，设置状态是失败
+                if (resolveFailureCause != null) { // 如果解析抛出异常则关闭连接,设置状态是失败
                     // Failed to resolve immediately
                     channel.close();
                     promise.setFailure(resolveFailureCause);
-                } else {// 如果解析成功则进行连接操作
+                } else { // 如果解析成功,则进行连接操作
                     // Succeeded to resolve immediately; cached? (or did a blocking lookup)
-                    doConnect(resolveFuture.getNow(), localAddress, promise);
+                    doConnect(resolveFuture.getNow(), localAddress, promise); // 真正的连接逻辑
                 }
                 return promise;
             }
 
-            // Wait until the name resolution is finished.如果未来才会解析完成，则添加一个监听器，监听未来监听的事件
+            // Wait until the name resolution is finished. 如果未来才会解析完成，则添加一个监听器，监听未来监听的事件
             resolveFuture.addListener(new FutureListener<SocketAddress>() {
                 @Override
                 public void operationComplete(Future<SocketAddress> future) throws Exception {
@@ -238,14 +238,14 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
         }
         return promise;
     }
-
+    /** 具体的连接,将连接操作异步化,避免阻塞主线程 */
     private static void doConnect(
             final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise connectPromise) {
 
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
         // the pipeline in its channelRegistered() implementation.
-        final Channel channel = connectPromise.channel();// 将连接这种 可能阻塞的操作 异步化
-        channel.eventLoop().execute(new Runnable() {
+        final Channel channel = connectPromise.channel(); // 获取 channel
+        channel.eventLoop().execute(new Runnable() { // 交给 eventLoop 去执行
             @Override
             public void run() {
                 if (localAddress == null) {
@@ -253,7 +253,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
                 } else {
                     channel.connect(remoteAddress, localAddress, connectPromise);
                 }
-                connectPromise.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+                connectPromise.addListener(ChannelFutureListener.CLOSE_ON_FAILURE); // 添加关闭失败 监听器
             }
         });
     }
@@ -262,17 +262,17 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     @SuppressWarnings("unchecked")
     void init(Channel channel) throws Exception {// 对 Channel进行初始化
         ChannelPipeline p = channel.pipeline();
-        p.addLast(config.handler());// pipeline添加 handler
+        p.addLast(config.handler()); // 将配置的 pipeline 添加到 handler 尾部
 
         final Map<ChannelOption<?>, Object> options = options0();
         synchronized (options) {
-            setChannelOptions(channel, options, logger);// 将用户配置的选项列表设置到通道对象中
+            setChannelOptions(channel, options, logger); // 将用户配置的选项列表设置到通道对象中
         }
 
         final Map<AttributeKey<?>, Object> attrs = attrs0();
         synchronized (attrs) {
             for (Entry<AttributeKey<?>, Object> e: attrs.entrySet()) {
-                channel.attr((AttributeKey<Object>) e.getKey()).set(e.getValue());// 将用户配置的属性类型设置到通道对象中
+                channel.attr((AttributeKey<Object>) e.getKey()).set(e.getValue()); // 将用户配置的属性类型设置到通道对象中
             }
         }
     }
