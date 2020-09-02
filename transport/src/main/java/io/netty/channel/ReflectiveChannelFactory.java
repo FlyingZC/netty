@@ -39,7 +39,7 @@ public class ReflectiveChannelFactory<T extends Channel> implements ChannelFacto
     }
 
     @Override
-    public T newChannel() {// 新的连接通道对象
+    public T newChannel() { // 反射创建新的连接通道对象
         try {
             return constructor.newInstance();
         } catch (Throwable t) {

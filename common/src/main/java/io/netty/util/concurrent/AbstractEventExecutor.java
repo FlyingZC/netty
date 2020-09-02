@@ -58,7 +58,7 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
     }
 
     @Override
-    public boolean inEventLoop() {// 判断当前线程是否是 EventExecutor原生线程
+    public boolean inEventLoop() {// 判断当前线程是否是 EventExecutor 原生线程(判断当前线程是否是NioEventLoop线程)
         return inEventLoop(Thread.currentThread());
     }
 

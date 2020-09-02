@@ -81,9 +81,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      */
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
-        id = newId();// 给每个 channel 分配一个唯一 id
-        unsafe = newUnsafe();// 每个 channel 内部需要一个 Unsafe 的实例,封装了对 Java 底层 Socket 的操作
-        pipeline = newChannelPipeline();// 每个 channel 内部都会创建一个 pipeline
+        id = newId(); // 给每个 channel 分配一个唯一 id
+        unsafe = newUnsafe(); // 每个 channel 内部需要一个 Unsafe 的实例,封装了对 Java 底层 Socket 的操作
+        pipeline = newChannelPipeline(); // 每个 channel 内部都会创建一个 pipeline
     }
 
     /**
@@ -261,7 +261,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     @Override
     public ChannelFuture connect(SocketAddress remoteAddress, ChannelPromise promise) {
-        return pipeline.connect(remoteAddress, promise);
+        return pipeline.connect(remoteAddress, promise); // 调用 DefaultChannelPipeline.connect()
     }
 
     @Override
@@ -475,10 +475,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
-            AbstractChannel.this.eventLoop = eventLoop;
+            AbstractChannel.this.eventLoop = eventLoop; // 关联 eventLoop
 
             if (eventLoop.inEventLoop()) {
-                register0(promise);
+                register0(promise); // 实际注册
             } else {
                 try {
                     eventLoop.execute(new Runnable() {
@@ -506,7 +506,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
-                doRegister();
+                doRegister(); // 注册
                 neverRegistered = false;
                 registered = true;
 
@@ -567,11 +567,11 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
-            if (!wasActive && isActive()) {
+            if (!wasActive && isActive()) { // 端口绑定前 wasActive 为 false,绑定后 isActive() 为true,则走里面逻辑
                 invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        pipeline.fireChannelActive();
+                        pipeline.fireChannelActive(); // 触发 pipeline 上的 channelActive 事件
                     }
                 });
             }

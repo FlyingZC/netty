@@ -83,9 +83,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         super(parent);
         this.ch = ch;
-        this.readInterestOp = readInterestOp;// 保存 SelectionKey.OP_READ 信息
+        this.readInterestOp = readInterestOp; // 保存 SelectionKey.OP_READ 信息
         try {
-            ch.configureBlocking(false);// 设置 channel 的非阻塞模式
+            ch.configureBlocking(false); // 设置 channel 的非阻塞模式
         } catch (IOException e) {
             try {
                 ch.close();
@@ -382,8 +382,8 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     protected void doRegister() throws Exception {
         boolean selected = false;
         for (;;) {
-            try {
-                selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
+            try { // register(selector, 0表示不关心任何事件, attachment将this绑定到selector上)
+                selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this); // 调用jdk底层channel注册,将channel注册到selector上
                 return;
             } catch (CancelledKeyException e) {
                 if (!selected) {
@@ -408,16 +408,16 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     @Override
     protected void doBeginRead() throws Exception {
         // Channel.read() or ChannelHandlerContext.read() was called
-        final SelectionKey selectionKey = this.selectionKey;
+        final SelectionKey selectionKey = this.selectionKey; // 获取 selectionKey
         if (!selectionKey.isValid()) {
             return;
         }
 
         readPending = true;
 
-        final int interestOps = selectionKey.interestOps();
-        if ((interestOps & readInterestOp) == 0) {
-            selectionKey.interestOps(interestOps | readInterestOp);
+        final int interestOps = selectionKey.interestOps(); // 获取 selectionKey 上感兴趣的事件.最初注册时关心的是0
+        if ((interestOps & readInterestOp) == 0) { // 若是0
+            selectionKey.interestOps(interestOps | readInterestOp); // 设置为 关心 读事件
         }
     }
 

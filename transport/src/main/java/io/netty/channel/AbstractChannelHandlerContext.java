@@ -511,7 +511,7 @@ abstract class AbstractChannelHandlerContext extends DefaultAttributeMap
             return promise;
         }
 
-        final AbstractChannelHandlerContext next = findContextOutbound();// 查找下一个处理器
+        final AbstractChannelHandlerContext next = findContextOutbound(); // 查找下一个处理器,返回 DefaultChannelPipeline$HeadContext 对象
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
             next.invokeConnect(remoteAddress, localAddress, promise);

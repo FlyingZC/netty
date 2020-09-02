@@ -58,7 +58,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
              *
              *  See <a href="https://github.com/netty/netty/issues/2308">#2308</a>.
              */
-            return provider.openServerSocketChannel();
+            return provider.openServerSocketChannel(); // 通过jdk的api创建 ServerSocketChannel
         } catch (IOException e) {
             throw new ChannelException(
                     "Failed to open a server socket.", e);
@@ -85,8 +85,8 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
-        super(null, channel, SelectionKey.OP_ACCEPT);// 对于服务端来说,关心的是 SelectionKey.OP_ACCEPT 事件,等待客户端连接
-        config = new NioServerSocketChannelConfig(this, javaChannel().socket());
+        super(null, channel, SelectionKey.OP_ACCEPT); // 对于服务端来说,关心的是 SelectionKey.OP_ACCEPT 事件,等待客户端连接
+        config = new NioServerSocketChannelConfig(this, javaChannel().socket()); // serverSocketChannel 的配置
     }
 
     @Override
@@ -127,7 +127,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
         if (PlatformDependent.javaVersion() >= 7) {
-            javaChannel().bind(localAddress, config.getBacklog());
+            javaChannel().bind(localAddress, config.getBacklog()); // 调用jdk底层的 bind()
         } else {
             javaChannel().socket().bind(localAddress, config.getBacklog());
         }

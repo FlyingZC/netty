@@ -56,11 +56,11 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
      * {@link SelectorProvider} which is returned by {@link SelectorProvider#provider()}.
      */
     public NioEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-        this(nThreads, threadFactory, SelectorProvider.provider());
+        this(nThreads, threadFactory, SelectorProvider.provider()); // SelectorProvider.provider() 创建 NioEventLoop 维护的 selector
     }
 
     public NioEventLoopGroup(int nThreads, Executor executor) {
-        this(nThreads, executor, SelectorProvider.provider());// 使用 JDK API获取 selectorProvider
+        this(nThreads, executor, SelectorProvider.provider()); // 使用 JDK API获取 selectorProvider
     }
 
     /**

@@ -67,7 +67,7 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
 
         @Override
         public EventExecutor next() {
-            return executors[Math.abs(idx.getAndIncrement() % executors.length)];
+            return executors[Math.abs(idx.getAndIncrement() % executors.length)]; // 自增取模
         }
     }
 }

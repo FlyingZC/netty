@@ -986,7 +986,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelFuture connect(SocketAddress remoteAddress, ChannelPromise promise) {
-        return tail.connect(remoteAddress, promise);
+        return tail.connect(remoteAddress, promise); // tail 是 DefaultChannelPipeline$TailContext 内部类实例
     }
 
     @Override

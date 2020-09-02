@@ -54,11 +54,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     private static final InternalLogger logger =
             InternalLoggerFactory.getInstance(SingleThreadEventExecutor.class);
 
-    private static final int ST_NOT_STARTED = 1;// 未启动
-    private static final int ST_STARTED = 2;// 已启动
-    private static final int ST_SHUTTING_DOWN = 3;// 关闭中
-    private static final int ST_SHUTDOWN = 4;// 关闭
-    private static final int ST_TERMINATED = 5;// 终止
+    private static final int ST_NOT_STARTED = 1; // 未启动
+    private static final int ST_STARTED = 2; // 已启动
+    private static final int ST_SHUTTING_DOWN = 3; // 关闭中
+    private static final int ST_SHUTDOWN = 4; // 关闭
+    private static final int ST_TERMINATED = 5; // 终止
 
     private static final Runnable WAKEUP_TASK = new Runnable() {
         @Override
@@ -162,7 +162,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         this.addTaskWakesUp = addTaskWakesUp;
         this.maxPendingTasks = Math.max(16, maxPendingTasks);
         this.executor = ObjectUtil.checkNotNull(executor, "executor");
-        taskQueue = newTaskQueue(this.maxPendingTasks);
+        taskQueue = newTaskQueue(this.maxPendingTasks); // 任务队列,交由 NioEventLoop 进行执行
         rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }
 
@@ -753,9 +753,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         }
 
         boolean inEventLoop = inEventLoop();
-        addTask(task);// task入队列
+        addTask(task); // task入队列
         if (!inEventLoop) {
-            startThread();
+            startThread(); // 启动线程
             if (isShutdown()) {
                 boolean reject = false;
                 try {
@@ -860,9 +860,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private void startThread() {
         if (state == ST_NOT_STARTED) {
-            if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) {
+            if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) { // CAS 将状态从 未启动 更新为 已启动
                 try {
-                    doStartThread();
+                    doStartThread(); // 启动线程
                 } catch (Throwable cause) {
                     STATE_UPDATER.set(this, ST_NOT_STARTED);
                     PlatformDependent.throwException(cause);
@@ -890,11 +890,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     private void doStartThread() {
-        assert thread == null;
-        executor.execute(new Runnable() {
+        assert thread == null; // 创建线程时线程应该为 null
+        executor.execute(new Runnable() { // executor 为 ThreadPerTaskExecutor 实例
             @Override
             public void run() {
-                thread = Thread.currentThread();
+                thread = Thread.currentThread(); // 保存当前线程
                 if (interrupted) {
                     thread.interrupt();
                 }
@@ -902,7 +902,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
-                    SingleThreadEventExecutor.this.run();
+                    SingleThreadEventExecutor.this.run(); // 启动
                     success = true;
                 } catch (Throwable t) {
                     logger.warn("Unexpected exception from an event executor: ", t);

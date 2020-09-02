@@ -140,8 +140,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             throw new NullPointerException("selectStrategy");
         }
         provider = selectorProvider;
-        final SelectorTuple selectorTuple = openSelector();// 开启 nio selector
-        selector = selectorTuple.selector;// 每个 NioEventLoop 都有自己的 Selector
+        final SelectorTuple selectorTuple = openSelector(); // 开启 nio selector
+        selector = selectorTuple.selector; // 每个 NioEventLoop 都有自己的 Selector
         unwrappedSelector = selectorTuple.unwrappedSelector;
         selectStrategy = strategy;
     }
@@ -169,8 +169,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             throw new ChannelException("failed to open a new selector", e);
         }
 
-        if (DISABLE_KEY_SET_OPTIMIZATION) {
-            return new SelectorTuple(unwrappedSelector);
+        if (DISABLE_KEY_SET_OPTIMIZATION) { // 无需优化
+            return new SelectorTuple(unwrappedSelector); // 返回原生 select
         }
 
         Object maybeSelectorImplClass = AccessController.doPrivileged(new PrivilegedAction<Object>() {
@@ -423,7 +423,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         for (;;) {
             try {
                 try {
-                    switch (selectStrategy.calculateStrategy(selectNowSupplier, hasTasks())) {// 调用 select()查询是否有就绪的 I/O事件
+                    switch (selectStrategy.calculateStrategy(selectNowSupplier, hasTasks())) { // 调用 select()查询是否有就绪的 I/O事件
                     case SelectStrategy.CONTINUE:
                         continue;
 
@@ -431,7 +431,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // fall-through to SELECT since the busy-wait is not supported with NIO
 
                     case SelectStrategy.SELECT:
-                        select(wakenUp.getAndSet(false));
+                        select(wakenUp.getAndSet(false)); // select操作,唤醒状态为false
 
                         // 'wakenUp.compareAndSet(false, true)' is always evaluated
                         // before calling 'selector.wakeup()' to reduce the wake-up
@@ -477,13 +477,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
                 cancelledKeys = 0;
                 needsToSelectAgain = false;
-                final int ioRatio = this.ioRatio;
+                final int ioRatio = this.ioRatio; // 控制 selectedKeys 和 tasks 的执行时间
                 if (ioRatio == 100) {
                     try {
-                        processSelectedKeys();// 处理就绪的 I/O事件
+                        processSelectedKeys(); // 处理就绪的 I/O事件
                     } finally {
                         // Ensure we always run tasks.
-                        runAllTasks();// 执行完任务队列中的任务
+                        runAllTasks(); // 执行任务队列中的任务
                     }
                 } else {
                     final long ioStartTime = System.nanoTime();
@@ -492,7 +492,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     } finally {
                         // Ensure we always run tasks.
                         final long ioTime = System.nanoTime() - ioStartTime;
-                        runAllTasks(ioTime * (100 - ioRatio) / ioRatio);// 给定时间内执行任务
+                        runAllTasks(ioTime * (100 - ioRatio) / ioRatio); // 给定时间内执行任务
                     }
                 }
             } catch (Throwable t) {
@@ -761,13 +761,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         try {
             int selectCnt = 0;
             long currentTimeNanos = System.nanoTime();
-            long selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos);// selectDeadLineNanos指可以进行 select操作的截止时间点
+            long selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos); // selectDeadLineNanos指可以进行 select操作的截止时间点
 
             for (;;) {
-                long timeoutMillis = (selectDeadLineNanos - currentTimeNanos + 500000L) / 1000000L;// 四舍五入将 select操作时间换算为毫秒单位
-                if (timeoutMillis <= 0) {// 时间不足 1ms,不再进行select操作
-                    if (selectCnt == 0) {// 如果一次select操作没有进行
-                        selector.selectNow();// selecNow()之后返回
+                long timeoutMillis = (selectDeadLineNanos - currentTimeNanos + 500000L) / 1000000L; // 四舍五入将 select操作时间换算为毫秒单位
+                if (timeoutMillis <= 0) { // 时间不足 1ms,不再进行select操作
+                    if (selectCnt == 0) { // 如果一次select操作没有进行
+                        selector.selectNow(); // selecNow()之后返回
                         selectCnt = 1;
                     }
                     break;
@@ -777,15 +777,15 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 // Selector#wakeup. So we need to check task queue again before executing select operation.
                 // If we don't, the task might be pended until select operation was timed out.
                 // It might be pended until idle timeout if IdleStateHandler existed in pipeline.
-                if (hasTasks() && wakenUp.compareAndSet(false, true)) {// 此时有任务进入队列 且 唤醒标志为假
-                    selector.selectNow();// selectNow()返回，否则会耽误任务执行
+                if (hasTasks() && wakenUp.compareAndSet(false, true)) { // 此时有任务进入队列 且 唤醒标志为假
+                    selector.selectNow(); // selectNow()返回，否则会耽误任务执行
                     selectCnt = 1;
                     break;
                 }
 
-                int selectedKeys = selector.select(timeoutMillis);
+                int selectedKeys = selector.select(timeoutMillis); // 阻塞式select
                 selectCnt ++;
-                // 有就绪的IO事件，参数 oldWakenUp为真，外部设置 wakenUp为真, 有待执行普通任务，有待执行调度任务
+                // 有就绪的IO事件,参数 oldWakenUp为真,外部设置 wakenUp为真, 有待执行普通任务, 有待执行调度任务
                 if (selectedKeys != 0 || oldWakenUp || wakenUp.get() || hasTasks() || hasScheduledTasks()) {
                     // - Selected something,
                     // - waken up by user, or
@@ -809,14 +809,14 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 }
 
                 long time = System.nanoTime();
-                if (time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) >= currentTimeNanos) {// 截止时间已到
+                if (time - TimeUnit.MILLISECONDS.toNanos(timeoutMillis) >= currentTimeNanos) { // 截止时间已到
                     // timeoutMillis elapsed without anything selected.
                     selectCnt = 1;
                 } else if (SELECTOR_AUTO_REBUILD_THRESHOLD > 0 &&
                         selectCnt >= SELECTOR_AUTO_REBUILD_THRESHOLD) {
                     // The code exists in an extra method to ensure the method is not too big to inline as this
                     // branch is not very likely to get hit very frequently.
-                    selector = selectRebuildSelector(selectCnt);
+                    selector = selectRebuildSelector(selectCnt); // 重建select,避免jdk空轮询bug
                     selectCnt = 1;
                     break;
                 }

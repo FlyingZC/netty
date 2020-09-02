@@ -78,7 +78,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * {@link Channel}'s.
      */
     public ServerBootstrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup) {// ServerBootstrap有两个group属性,特意分开就是将两者相互隔离，避免相互干扰
-        super.group(parentGroup);// parentGroup负责处理 ServerChannel（接收客户端连接通道）的I/O事件.  chidGroup则是用于处理 Channel（客户端连接通道）的I/O事件。
+        super.group(parentGroup);// parentGroup负责处理 ServerChannel（接收客户端连接通道）的I/O事件.  childGroup则是用于处理 Channel（客户端连接通道）的I/O事件。
         if (childGroup == null) {
             throw new NullPointerException("childGroup");
         }
@@ -136,16 +136,16 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         this.childHandler = childHandler;
         return this;
     }
-
+    /** 服务端 channel 初始化 1.初始化 ServerSocketChannel; 2.接收来自于客户端的 SockeChannel */
     @Override
     void init(Channel channel) throws Exception {
         final Map<ChannelOption<?>, Object> options = options0();
         synchronized (options) {
-            setChannelOptions(channel, options, logger);
+            setChannelOptions(channel, options, logger); // 设置 ChannelOptions 配置
         }
 
         final Map<AttributeKey<?>, Object> attrs = attrs0();
-        synchronized (attrs) {
+        synchronized (attrs) { // 设置 ChannelAttrs 配置
             for (Entry<AttributeKey<?>, Object> e: attrs.entrySet()) {
                 @SuppressWarnings("unchecked")
                 AttributeKey<Object> key = (AttributeKey<Object>) e.getKey();
@@ -153,32 +153,32 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             }
         }
 
-        ChannelPipeline p = channel.pipeline();// 获取 pipeline
+        ChannelPipeline p = channel.pipeline(); // 获取 pipeline
 
         final EventLoopGroup currentChildGroup = childGroup;
         final ChannelHandler currentChildHandler = childHandler;
         final Entry<ChannelOption<?>, Object>[] currentChildOptions;
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs;
-        synchronized (childOptions) {
+        synchronized (childOptions) { // 设置 childOptions 配置
             currentChildOptions = childOptions.entrySet().toArray(newOptionArray(0));
         }
-        synchronized (childAttrs) {
+        synchronized (childAttrs) { // 设置 childAttrs 配置
             currentChildAttrs = childAttrs.entrySet().toArray(newAttrArray(0));
         }
 
-        p.addLast(new ChannelInitializer<Channel>() {
+        p.addLast(new ChannelInitializer<Channel>() { // 将自定义的 handler 设置到 pipeline
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
-                ChannelHandler handler = config.handler();// 返回配置的 handler
+                ChannelHandler handler = config.handler(); // 返回用户配置的 handler
                 if (handler != null) {
-                    pipeline.addLast(handler);
+                    pipeline.addLast(handler); // 将配置的 handler 添加到 pipeline
                 }
 
                 ch.eventLoop().execute(new Runnable() {
                     @Override
-                    public void run() {// 这个handler 的目的是用于接收客户端请求
-                        pipeline.addLast(new ServerBootstrapAcceptor(
+                    public void run() { // 这个 handler 的目的是用于接收客户端请求
+                        pipeline.addLast(new ServerBootstrapAcceptor( // 添加一个 ServerBootstrapAcceptor 处理器,一个输入事件处理器
                                 ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
                     }
                 });
@@ -219,7 +219,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
         ServerBootstrapAcceptor(
                 final Channel channel, EventLoopGroup childGroup, ChannelHandler childHandler,
-                Entry<ChannelOption<?>, Object>[] childOptions, Entry<AttributeKey<?>, Object>[] childAttrs) {
+                Entry<ChannelOption<?>, Object>[] childOptions, Entry<AttributeKey<?>, Object>[] childAttrs) { // 赋值 子连接的配置信息
             this.childGroup = childGroup;
             this.childHandler = childHandler;
             this.childOptions = childOptions;
@@ -251,11 +251,11 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 child.attr((AttributeKey<Object>) e.getKey()).set(e.getValue());
             }
 
-            try {
-                childGroup.register(child).addListener(new ChannelFutureListener() {
+            try { // 将 channel 注册到 childGroup 中
+                childGroup.register(child).addListener(new ChannelFutureListener() { // 提交了一个异步任务
                     @Override
-                    public void operationComplete(ChannelFuture future) throws Exception {
-                        if (!future.isSuccess()) {
+                    public void operationComplete(ChannelFuture future) throws Exception { // 监听注册完成的事件
+                        if (!future.isSuccess()) { // 如果注册失败则强制关闭连接
                             forceClose(child, future.cause());
                         }
                     }

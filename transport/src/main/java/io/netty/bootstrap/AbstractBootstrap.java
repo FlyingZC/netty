@@ -267,7 +267,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         return bind(new InetSocketAddress(inetHost, inetPort));
     }
 
-    /** 服务端启动器绑定一个端口号，启动ServerChannel，等待客户端的连接
+    /** 服务端启动器绑定一个端口号,启动 ServerChannel,等待客户端的连接
      * Create a new {@link Channel} and bind it.
      */
     public ChannelFuture bind(SocketAddress localAddress) {
@@ -279,8 +279,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     private ChannelFuture doBind(final SocketAddress localAddress) {
-        final ChannelFuture regFuture = initAndRegister();
-        final Channel channel = regFuture.channel();
+        final ChannelFuture regFuture = initAndRegister(); // 初始化 和 注册 channel
+        final Channel channel = regFuture.channel(); // 服务端获取到的 channel 是 NioServerSocketChannel 对象
         if (regFuture.cause() != null) {
             return regFuture;
         }
@@ -288,7 +288,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         if (regFuture.isDone()) {
             // At this point we know that the registration was complete and successful.
             ChannelPromise promise = channel.newPromise();
-            doBind0(regFuture, channel, localAddress, promise);
+            doBind0(regFuture, channel, localAddress, promise); // 真正的绑定逻辑
             return promise;
         } else {
             // Registration future is almost always fulfilled already, but just in case it's not.
@@ -317,9 +317,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
-            channel = channelFactory.newChannel();// 通过 channelFactory 创建 socketChannel,如 NioSocketChannel
-            init(channel); // channel 初始化
-        } catch (Throwable t) {// 异常处理当实例化 或者 初始化抛出异常 的情况下则 关闭通道并且返回一个失败状态的 ChannelFuture 对象
+            channel = channelFactory.newChannel(); // 1.通过 channelFactory 创建 socketChannel,如 NioSocketChannel
+            init(channel); // 2.channel 初始化
+        } catch (Throwable t) { // 异常处理当实例化 或者 初始化抛出异常 的情况下则 关闭通道并且返回一个失败状态的 ChannelFuture 对象
             if (channel != null) {
                 // channel can be null if newChannel crashed (eg SocketException("too many open files"))
                 channel.unsafe().closeForcibly();
@@ -330,8 +330,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
-        ChannelFuture regFuture = config().group().register(channel);// 将初始化过的 NioServerSocketChannel 注册到配置的 EventLoopGroup对象上,返回 ChannelFuture对象
-        if (regFuture.cause() != null) {// 注册失败则关闭连接通道
+        ChannelFuture regFuture = config().group().register(channel);// 3.将初始化过的 NioServerSocketChannel 注册到配置的 EventLoopGroup对象上,返回 ChannelFuture对象
+        if (regFuture.cause() != null) { // 注册失败则关闭连接通道
             if (channel.isRegistered()) {
                 channel.close();
             } else {
@@ -352,20 +352,20 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     abstract void init(Channel channel) throws Exception;
-
+    /** 真正的 bind 逻辑,异步执行 */
     private static void doBind0(
             final ChannelFuture regFuture, final Channel channel,
             final SocketAddress localAddress, final ChannelPromise promise) {
 
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
         // the pipeline in its channelRegistered() implementation.
-        channel.eventLoop().execute(new Runnable() {
+        channel.eventLoop().execute(new Runnable() { // 异步执行 bind 逻辑
             @Override
             public void run() {
-                if (regFuture.isSuccess()) {
+                if (regFuture.isSuccess()) { // 当注册成功后调用 ServerScoketChannel.bind() 执行真正的绑定端口逻辑
                     channel.bind(localAddress, promise).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
-                    promise.setFailure(regFuture.cause());
+                    promise.setFailure(regFuture.cause()); // 注册失败则设置 Futrue 为失败状态
                 }
             }
         });
