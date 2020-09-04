@@ -79,7 +79,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
     public NioEventLoopGroup(
             int nThreads, Executor executor, final SelectorProvider selectorProvider) {
-        this(nThreads, executor, selectorProvider, DefaultSelectStrategyFactory.INSTANCE);// 线程在做 select 操作和 执行任务 过程中的策略选择
+        this(nThreads, executor, selectorProvider, DefaultSelectStrategyFactory.INSTANCE); // 线程在做 select 操作和 执行任务 过程中的策略选择
     }
 
     public NioEventLoopGroup(int nThreads, Executor executor, final SelectorProvider selectorProvider,
@@ -124,6 +124,6 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     @Override
     protected EventLoop newChild(Executor executor, Object... args) throws Exception {
         return new NioEventLoop(this, executor, (SelectorProvider) args[0],
-            ((SelectStrategyFactory) args[1]).newSelectStrategy(), (RejectedExecutionHandler) args[2]);// NioEventLoopGroup, executor, SelectorProvider, 选择策略工厂, 拒绝策略处理器
+            ((SelectStrategyFactory) args[1]).newSelectStrategy(), (RejectedExecutionHandler) args[2]); // 参数 NioEventLoopGroup, executor, SelectorProvider, 选择策略工厂, 拒绝策略处理器
     }
 }

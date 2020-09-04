@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * the same time.
  */
 public abstract class MultithreadEventExecutorGroup extends AbstractEventExecutorGroup {
-    // 线程池，数组形式可知为固定线程池
+    // 线程池,数组形式可知为固定线程池
     private final EventExecutor[] children;
     private final Set<EventExecutor> readonlyChildren;
     private final AtomicInteger terminatedChildren = new AtomicInteger();// 终止的线程个数
@@ -73,10 +73,10 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         }
 
         if (executor == null) {
-            executor = new ThreadPerTaskExecutor(newDefaultThreadFactory()); // 创建 ThreadPerTaskExecutor
+            executor = new ThreadPerTaskExecutor(newDefaultThreadFactory()); // 创建 ThreadPerTaskExecutor,线程执行器
         }
 
-        children = new EventExecutor[nThreads];
+        children = new EventExecutor[nThreads]; // 创建线程池
 
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;

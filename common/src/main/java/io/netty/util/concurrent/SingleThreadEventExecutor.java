@@ -431,7 +431,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      */
     @UnstableApi
     protected void afterRunningAllTasks() { }
-    /** delayNanos返回的是最近的一个调度任务的到期时间，没有调度任务返回1秒
+    /** delayNanos返回的是最近的一个调度任务的到期时间,没有调度任务返回1秒
      * Returns the amount of time left until the scheduled task with the closest dead line is executed.
      */
     protected long delayNanos(long currentTimeNanos) {

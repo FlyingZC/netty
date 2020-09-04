@@ -31,7 +31,7 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
 
     @SuppressWarnings("unchecked")
     @Override
-    public EventExecutorChooser newChooser(EventExecutor[] executors) {// 不同的线程池选择策略,选择效率会高一点
+    public EventExecutorChooser newChooser(EventExecutor[] executors) {// 返回chooser(不同的线程池选择策略),选择效率会高一点
         if (isPowerOfTwo(executors.length)) {// 如果线程池的线程数量是 2^n
             return new PowerOfTwoEventExecutorChooser(executors);
         } else {
