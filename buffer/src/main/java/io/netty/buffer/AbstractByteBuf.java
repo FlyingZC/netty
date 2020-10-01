@@ -63,7 +63,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
             logger.debug("-D{}: {}", PROP_CHECK_BOUNDS, checkBounds);
         }
     }
-
+    // 所有 ByteBuf共用该属性,leakDetector用于检测对象是否泄漏
     static final ResourceLeakDetector<ByteBuf> leakDetector =
             ResourceLeakDetectorFactory.instance().newResourceLeakDetector(ByteBuf.class);
 
@@ -270,24 +270,24 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     @Override
     public ByteBuf ensureWritable(int minWritableBytes) {
-        checkPositiveOrZero(minWritableBytes, "minWritableBytes");
+        checkPositiveOrZero(minWritableBytes, "minWritableBytes"); // 如果写入的字节数组长度小于0，则抛出IllegalArgumentException异常
         ensureWritable0(minWritableBytes);
         return this;
     }
 
     final void ensureWritable0(int minWritableBytes) {
         ensureAccessible();
-        if (minWritableBytes <= writableBytes()) {
+        if (minWritableBytes <= writableBytes()) { // 如果写入的字节数组长度小于当前ByteBuf可写的字节数，说明可以写入成功，直接返回
             return;
         }
         if (checkBounds) {
-            if (minWritableBytes > maxCapacity - writerIndex) {
+            if (minWritableBytes > maxCapacity - writerIndex) { // 如果写入的字节数组长度大于可以动态扩展的最大可写字节数，说明缓冲区无法写入超过其最大容量的字节数组，抛出IndexOutOfBoundsException异常
                 throw new IndexOutOfBoundsException(String.format(
                         "writerIndex(%d) + minWritableBytes(%d) exceeds maxCapacity(%d): %s",
                         writerIndex, minWritableBytes, maxCapacity, this));
             }
         }
-
+        // 如果当前写入的字节数组长度虽然大于目前ByteBuf的可写字节数，但是通过自身的动态扩展可以满足新的写入请求，则进行动态扩展。
         // Normalize the current capacity to the power of 2.
         int newCapacity = alloc().calculateNewCapacity(writerIndex + minWritableBytes, maxCapacity);
 
@@ -885,9 +885,9 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     @Override
     public ByteBuf readBytes(byte[] dst, int dstIndex, int length) {
-        checkReadableBytes(length);
-        getBytes(readerIndex, dst, dstIndex, length);
-        readerIndex += length;
+        checkReadableBytes(length); // 先对缓冲区的可用空间进行校验
+        getBytes(readerIndex, dst, dstIndex, length); // 该方法由子类具体实现.从当前的读索引开始,复制length个字节到目标byte数组中
+        readerIndex += length; // 如果读取成功，需要对读索引进行递增：readerIndex+=length
         return this;
     }
 

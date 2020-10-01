@@ -255,23 +255,23 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
                     "minNewCapacity: %d (expected: not greater than maxCapacity(%d)",
                     minNewCapacity, maxCapacity));
         }
-        final int threshold = CALCULATE_THRESHOLD; // 4 MiB page
+        final int threshold = CALCULATE_THRESHOLD; // 4 MiB page 首先设置门限阈值为4MB
 
-        if (minNewCapacity == threshold) {
+        if (minNewCapacity == threshold) { // 当需要的新容量正好等于门限阈值时，使用阈值作为新的缓冲区容量。
             return threshold;
         }
 
         // If over threshold, do not double but just increase by threshold.
-        if (minNewCapacity > threshold) {
-            int newCapacity = minNewCapacity / threshold * threshold;
-            if (newCapacity > maxCapacity - threshold) {
+        if (minNewCapacity > threshold) { // 如果新申请的内存空间大于阈值
+            int newCapacity = minNewCapacity / threshold * threshold; // newCapacity为扩容的增量. 采用每次步进4MB的方式进行内存扩张
+            if (newCapacity > maxCapacity - threshold) { // 最大不能超过 maxCapacity. 扩张的时候需要对扩张后的内存和最大内存（maxCapacity）进行比较，如果大于缓冲区的最大长度，则使用maxCapacity作为扩容后的缓冲区容量。
                 newCapacity = maxCapacity;
             } else {
-                newCapacity += threshold;
+                newCapacity += threshold; // 扩容后的 capacity
             }
             return newCapacity;
         }
-
+        // 如果扩容后的新容量小于阈值，则以64为计数进行倍增，直到倍增后的结果大于或等于需要的容量值。
         // Not over threshold. Double up to 4 MiB, starting from 64.
         int newCapacity = 64;
         while (newCapacity < minNewCapacity) {
