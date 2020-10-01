@@ -160,7 +160,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             this.selector = selector;
         }
     }
-
+    /** 创建 Java selector */
     private SelectorTuple openSelector() {
         final Selector unwrappedSelector;
         try {
@@ -172,7 +172,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         if (DISABLE_KEY_SET_OPTIMIZATION) { // 无需优化
             return new SelectorTuple(unwrappedSelector); // 返回原生 select
         }
-
+        // 反射获取 sun.nio.ch.SelectorImpl 类
         Object maybeSelectorImplClass = AccessController.doPrivileged(new PrivilegedAction<Object>() {
             @Override
             public Object run() {
@@ -198,13 +198,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
 
         final Class<?> selectorImplClass = (Class<?>) maybeSelectorImplClass;
-        final SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
+        final SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet(); // 创建 SelectedSelectionKeySet
 
         Object maybeException = AccessController.doPrivileged(new PrivilegedAction<Object>() {
             @Override
             public Object run() {
                 try {
-                    Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys"); // 反射获取 selectorImplClass类的selectedKeys属性
+                    Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys"); // 反射获取 sun.nio.ch.SelectorImpl 类的 selectedKeys 属性
                     Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
 
                     if (PlatformDependent.javaVersion() >= 9 && PlatformDependent.hasUnsafe()) {
@@ -600,13 +600,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     }
 
     private void processSelectedKeysOptimized() {
-        for (int i = 0; i < selectedKeys.size; ++i) {
+        for (int i = 0; i < selectedKeys.size; ++i) { // 遍历 selectedKeys
             final SelectionKey k = selectedKeys.keys[i];
             // null out entry in the array to allow to have it GC'ed once the Channel close
             // See https://github.com/netty/netty/issues/2363
             selectedKeys.keys[i] = null;
 
-            final Object a = k.attachment();
+            final Object a = k.attachment(); // 获取 attachment,是 Channel 对象
 
             if (a instanceof AbstractNioChannel) {
                 processSelectedKey(k, (AbstractNioChannel) a);
@@ -629,7 +629,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
         final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe(); // 获取 channel 中的 unsafe
-        if (!k.isValid()) {// 选择键不再有效,有问题
+        if (!k.isValid()) { // 选择键不再有效,有问题
             final EventLoop eventLoop;
             try {
                 eventLoop = ch.eventLoop();
@@ -643,7 +643,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             // and thus the SelectionKey could be cancelled as part of the deregistration process, but the channel is
             // still healthy and should not be closed.
             // See https://github.com/netty/netty/issues/5125
-            if (eventLoop != this || eventLoop == null) {// channel已不再该EventLoop，直接返回
+            if (eventLoop != this || eventLoop == null) { // channel已不再该EventLoop，直接返回
                 return;
             }
             // close the channel if the key is not valid anymore
@@ -659,22 +659,22 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 // remove OP_CONNECT as otherwise Selector.select(..) will always return without blocking
                 // See https://github.com/netty/netty/issues/924
                 int ops = k.interestOps();
-                ops &= ~SelectionKey.OP_CONNECT;// 连接完成后客户端除了连接事件都感兴趣
+                ops &= ~SelectionKey.OP_CONNECT; // 连接完成后客户端除了连接事件都感兴趣
                 k.interestOps(ops);
 
-                unsafe.finishConnect();// 完成连接
+                unsafe.finishConnect(); // 完成连接
             }
 
             // Process OP_WRITE first as we may be able to write some queued buffers and so free memory.
-            if ((readyOps & SelectionKey.OP_WRITE) != 0) {// 写事件
+            if ((readyOps & SelectionKey.OP_WRITE) != 0) { // 写事件
                 // Call forceFlush which will also take care of clear the OP_WRITE once there is nothing left to write
                 ch.unsafe().forceFlush();
             }
 
             // Also check for readOps of 0 to workaround possible JDK bug which may otherwise lead
             // to a spin loop
-            if ((readyOps & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != 0 || readyOps == 0) {// readyOps == 0为对 JDK Bug的处理， 防止死循环
-                unsafe.read();// 读事件以及服务端的 ACCEPT事件都抽象为 read()事件
+            if ((readyOps & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != 0 || readyOps == 0) { // readyOps == 0为对 JDK Bug的处理,防止死循环
+                unsafe.read(); // 读事件 以及 服务端的 ACCEPT 事件 都抽象为 read()事件
             }
         } catch (CancelledKeyException ignored) {
             unsafe.close(unsafe.voidPromise());

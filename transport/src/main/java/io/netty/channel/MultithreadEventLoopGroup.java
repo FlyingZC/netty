@@ -70,7 +70,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     @Override
     protected ThreadFactory newDefaultThreadFactory() {
-        return new DefaultThreadFactory(getClass(), Thread.MAX_PRIORITY);
+        return new DefaultThreadFactory(getClass(), Thread.MAX_PRIORITY); // 创建默认的线程工厂,参数(线程类型, 线程优先级)
     }
 
     @Override

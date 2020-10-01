@@ -57,21 +57,21 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
 
     private final class NioMessageUnsafe extends AbstractNioUnsafe {
 
-        private final List<Object> readBuf = new ArrayList<Object>();
+        private final List<Object> readBuf = new ArrayList<Object>(); // 存储读到的连接
 
         @Override
         public void read() {
-            assert eventLoop().inEventLoop();
-            final ChannelConfig config = config();
-            final ChannelPipeline pipeline = pipeline();
-            final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
+            assert eventLoop().inEventLoop(); // 当前线程必须是 NioEventLoop
+            final ChannelConfig config = config(); // 获取 config
+            final ChannelPipeline pipeline = pipeline(); // 获取 pipeline
+            final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle(); // 接收速率控制
             allocHandle.reset(config);
 
             boolean closed = false;
             Throwable exception = null;
             try {
                 try {
-                    do {
+                    do { // 循环
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;
@@ -81,16 +81,16 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                             break;
                         }
 
-                        allocHandle.incMessagesRead(localRead);
+                        allocHandle.incMessagesRead(localRead); // 增加连接计数
                     } while (allocHandle.continueReading());
                 } catch (Throwable t) {
                     exception = t;
                 }
 
                 int size = readBuf.size();
-                for (int i = 0; i < size; i ++) {
+                for (int i = 0; i < size; i ++) { // 遍历每一个客户端连接
                     readPending = false;
-                    pipeline.fireChannelRead(readBuf.get(i));
+                    pipeline.fireChannelRead(readBuf.get(i)); // 调用 pipeline.fireChannelRead() 方法
                 }
                 readBuf.clear();
                 allocHandle.readComplete();

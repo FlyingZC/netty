@@ -198,7 +198,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     @Override
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
-        synchronized (this) {
+        synchronized (this) { // 对 pipeline 加锁
             checkMultiplicity(handler);// 查重
 
             newCtx = newContext(group, filterName(name, handler), handler);
