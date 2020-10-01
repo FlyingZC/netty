@@ -90,7 +90,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
 
     @Override
     public Promise<V> setSuccess(V result) {
-        if (setSuccess0(result)) {
+        if (setSuccess0(result)) { // 对操作结果进行判断
             return this;
         }
         throw new IllegalStateException("complete already: " + this);
@@ -208,7 +208,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
             return this;
         }
 
-        if (Thread.interrupted()) {
+        if (Thread.interrupted()) { // 响应中断
             throw new InterruptedException(toString());
         }
 
@@ -216,11 +216,11 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
 
         synchronized (this) {
             while (!isDone()) {
-                incWaiters();
+                incWaiters(); // 增加 waiter 计数
                 try {
-                    wait();
+                    wait(); // 等待
                 } finally {
-                    decWaiters();
+                    decWaiters(); // 减少 waiter 计数
                 }
             }
         }
@@ -290,7 +290,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
     @SuppressWarnings("unchecked")
     @Override
     public V getNow() {
-        Object result = this.result;
+        Object result = this.result; // 从promise中取出设置的result并返回
         if (result instanceof CauseHolder || result == SUCCESS || result == UNCANCELLABLE) {
             return null;
         }
@@ -325,7 +325,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
 
     @Override
     public Promise<V> sync() throws InterruptedException {
-        await();
+        await(); // 增加 defaultPromise 里的 waiter 计数
         rethrowIfFailed();// 如果任务是失败的，重新抛出相应的异常
         return this;
     }
@@ -405,10 +405,10 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
     }
 
     private void notifyListeners() {
-        EventExecutor executor = executor();
-        if (executor.inEventLoop()) {// 执行线程为指定线程
+        EventExecutor executor = executor(); // 获取 eventLoop
+        if (executor.inEventLoop()) {// 若当前线程为eventLoop线程
             final InternalThreadLocalMap threadLocals = InternalThreadLocalMap.get();
-            final int stackDepth = threadLocals.futureListenerStackDepth();// 嵌套层数
+            final int stackDepth = threadLocals.futureListenerStackDepth(); // 获取当前线程threadLocal上保存的listener调用个数
             if (stackDepth < MAX_LISTENER_STACK_DEPTH) {
                 threadLocals.setFutureListenerStackDepth(stackDepth + 1);// 执行前增加嵌套层数
                 try {
@@ -480,7 +480,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
                     // Nothing can throw from within this method, so setting notifyingListeners back to false does not
                     // need to be in a finally block.
                     notifyingListeners = false;
-                    return;
+                    return; // 跳出循环
                 }
                 listeners = this.listeners;// 外部线程添加了监听者继续执行
                 this.listeners = null;
@@ -489,17 +489,17 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
     }
 
     private void notifyListeners0(DefaultFutureListeners listeners) {
-        GenericFutureListener<?>[] a = listeners.listeners();
+        GenericFutureListener<?>[] a = listeners.listeners(); // 获取 listeners
         int size = listeners.size();
-        for (int i = 0; i < size; i ++) {
-            notifyListener0(this, a[i]);
+        for (int i = 0; i < size; i ++) { // 遍历
+            notifyListener0(this, a[i]); // 通知单个 listener
         }
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static void notifyListener0(Future future, GenericFutureListener l) {
         try {
-            l.operationComplete(future);
+            l.operationComplete(future); // 调用 listener.operationComplete() 方法
         } catch (Throwable t) {
             if (logger.isWarnEnabled()) {
                 logger.warn("An exception was thrown by " + l.getClass().getName() + ".operationComplete()", t);
@@ -526,7 +526,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
     }
 
     private boolean setSuccess0(V result) {
-        return setValue0(result == null ? SUCCESS : result);
+        return setValue0(result == null ? SUCCESS : result); // 若 result 为 null,则设置结果为success,否则设置为给定的result
     }
 
     private boolean setFailure0(Throwable cause) {
@@ -534,10 +534,10 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
     }
 
     private boolean setValue0(Object objResult) {
-        if (RESULT_UPDATER.compareAndSet(this, null, objResult) ||
-            RESULT_UPDATER.compareAndSet(this, UNCANCELLABLE, objResult)) {// 设置值
-            if (checkNotifyWaiters()) {
-                notifyListeners();// 执行 listener的回调方法
+        if (RESULT_UPDATER.compareAndSet(this, null, objResult) || // cas设置当前this对象的result属性值为 objResult
+            RESULT_UPDATER.compareAndSet(this, UNCANCELLABLE, objResult)) {
+            if (checkNotifyWaiters()) { // 修改成 objResult 后,唤醒 listeners
+                notifyListeners(); // 执行 listener 的回调方法
             }
             return true;
         }
@@ -554,14 +554,14 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
         }
         return listeners != null;
     }
-
+    /**增加waiter计数*/
     private void incWaiters() {
         if (waiters == Short.MAX_VALUE) {
             throw new IllegalStateException("too many waiters: " + this);
         }
         ++waiters;
     }
-
+    /**减少waiter计数*/
     private void decWaiters() {
         --waiters;
     }
@@ -751,7 +751,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
     }
 
     private static boolean isDone0(Object result) {
-        return result != null && result != UNCANCELLABLE;
+        return result != null && result != UNCANCELLABLE; // 结果不为null 且 不为 UNCANCELLABLE
     }
 
     private static final class CauseHolder {

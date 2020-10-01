@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("ComparableImplementedButEqualsNotOverridden")
 final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFuture<V>, PriorityQueueNode {
-    private static final AtomicLong nextTaskId = new AtomicLong();// 调度任务 ID生成器
-    private static final long START_TIME = System.nanoTime();// 调度相对时间起点.Netty使用了相对时间调度，时间起点为 ScheduledFutureTask类第一次被类加载器加载的时间
+    private static final AtomicLong nextTaskId = new AtomicLong(); // 调度任务 ID生成器
+    private static final long START_TIME = System.nanoTime(); // 调度相对时间起点.Netty使用了相对时间调度，时间起点为 ScheduledFutureTask类第一次被类加载器加载的时间
 
     static long nanoTime() {// 获取相对的当前时间
         return System.nanoTime() - START_TIME;
@@ -98,13 +98,13 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
     }
 
     @Override
-    public int compareTo(Delayed o) {// 优先级队列的出队顺序是：截止时间最近的先出队，如果截止时间相同则ID小的先出队
+    public int compareTo(Delayed o) { // 比较方法. 优先级队列的出队顺序是: 截止时间最近的先出队,如果截止时间相同则ID小的先出队
         if (this == o) {
             return 0;
         }
 
         ScheduledFutureTask<?> that = (ScheduledFutureTask<?>) o;
-        long d = deadlineNanos() - that.deadlineNanos();
+        long d = deadlineNanos() - that.deadlineNanos(); // 截止时间比较
         if (d < 0) {
             return -1;
         } else if (d > 0) {

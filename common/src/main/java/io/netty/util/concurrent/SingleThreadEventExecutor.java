@@ -272,14 +272,14 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private boolean fetchFromScheduledTaskQueue() {
         long nanoTime = AbstractScheduledEventExecutor.nanoTime();
-        Runnable scheduledTask  = pollScheduledTask(nanoTime);
-        while (scheduledTask != null) {
-            if (!taskQueue.offer(scheduledTask)) {
+        Runnable scheduledTask  = pollScheduledTask(nanoTime); // 获取 task
+        while (scheduledTask != null) { // 直到截止时间到了的任务取完了,结束循环
+            if (!taskQueue.offer(scheduledTask)) { // 将定时任务添加到 普通taskQueue 里.如果添加失败
                 // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
-                scheduledTaskQueue().add((ScheduledFutureTask<?>) scheduledTask);// 任务队列已满，则重新添加到调度任务队列
+                scheduledTaskQueue().add((ScheduledFutureTask<?>) scheduledTask); // 任务队列已满,则重新将任务添加到 调度任务队列中
                 return false;
             }
-            scheduledTask  = pollScheduledTask(nanoTime);
+            scheduledTask  = pollScheduledTask(nanoTime); // 继续拉取截止时间已经到了的定时任务
         }
         return true;
     }
@@ -310,7 +310,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return taskQueue.size();
     }
 
-    /**
+    /** 添加 task 到 queue 中
      * Add a task to the task queue, or throws a {@link RejectedExecutionException} if this instance was shutdown
      * before.
      */
@@ -327,7 +327,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         if (isShutdown()) {
             reject();
         }
-        return taskQueue.offer(task);
+        return taskQueue.offer(task); // 向 taskQueue 中 添加 task
     }
 
     /**
@@ -351,8 +351,8 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         boolean ranAtLeastOne = false;
 
         do {
-            fetchedAll = fetchFromScheduledTaskQueue();
-            if (runAllTasksFrom(taskQueue)) {
+            fetchedAll = fetchFromScheduledTaskQueue(); // 从定时任务队列中拉取截止时间已经到了的任务
+            if (runAllTasksFrom(taskQueue)) { // 上一步取出来的任务已经放到了taskQueue里,执行task
                 ranAtLeastOne = true;
             }
         } while (!fetchedAll); // keep on processing until we fetched all scheduled tasks.
@@ -360,7 +360,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         if (ranAtLeastOne) {
             lastExecutionTime = ScheduledFutureTask.nanoTime();
         }
-        afterRunningAllTasks();
+        afterRunningAllTasks(); // 收尾操作
         return ranAtLeastOne;
     }
 
@@ -377,10 +377,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             return false;
         }
         for (;;) {
-            safeExecute(task);
-            task = pollTaskFrom(taskQueue);
-            if (task == null) {
-                return true;
+            safeExecute(task); // try..catch 执行task的run方法
+            task = pollTaskFrom(taskQueue); // 继续从 taskQueue 中取出任务
+            if (task == null) { // 直到 taskQueue 为空
+                return true; // 循环出口
             }
         }
     }

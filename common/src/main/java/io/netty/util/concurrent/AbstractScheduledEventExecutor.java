@@ -102,16 +102,16 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         assert inEventLoop();
 
         Queue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
-        ScheduledFutureTask<?> scheduledTask = scheduledTaskQueue == null ? null : scheduledTaskQueue.peek();
+        ScheduledFutureTask<?> scheduledTask = scheduledTaskQueue == null ? null : scheduledTaskQueue.peek(); // 从定时任务队列中 获取任务
         if (scheduledTask == null) {
             return null;
         }
 
-        if (scheduledTask.deadlineNanos() <= nanoTime) {
-            scheduledTaskQueue.remove();
+        if (scheduledTask.deadlineNanos() <= nanoTime) { // 取出来的定时任务的截止时间 已经到了
+            scheduledTaskQueue.remove(); // 取出定时任务,并返回
             return scheduledTask;
         }
-        return null;
+        return null; // 说明队列里的定时任务截止时间还没到,返回null
     }
 
     /**  取得距离下一个调度任务执行的间隔时间
@@ -226,13 +226,13 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     }
 
     <V> ScheduledFuture<V> schedule(final ScheduledFutureTask<V> task) {
-        if (inEventLoop()) {
-            scheduledTaskQueue().add(task);// 原生线程直接向任务队列添加
-        } else {
-            execute(new Runnable() {// 其他线程则提交一个添加调度任务的任务
+        if (inEventLoop()) { // 是否是 NioEventLoop 线程调用的
+            scheduledTaskQueue().add(task); // 原生线程直接向任务队列添加
+        } else { // 外部线程调用
+            execute(new Runnable() { // 其他线程则提交一个添加调度任务的任务
                 @Override
                 public void run() {
-                    scheduledTaskQueue().add(task);
+                    scheduledTaskQueue().add(task); // 添加任务到定时任务队列
                 }
             });
         }

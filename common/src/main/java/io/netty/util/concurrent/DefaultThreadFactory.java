@@ -60,29 +60,29 @@ public class DefaultThreadFactory implements ThreadFactory {
     }
 
     public DefaultThreadFactory(Class<?> poolType, boolean daemon, int priority) {
-        this(toPoolName(poolType), daemon, priority);
+        this(toPoolName(poolType), daemon, priority); // 通过Class对象转换成poolName
     }
-    /** 将类型转换成线程池名 */
+    /** 将Class类型转换成线程池名 */
     public static String toPoolName(Class<?> poolType) {
         if (poolType == null) {
             throw new NullPointerException("poolType");
         }
 
         String poolName = StringUtil.simpleClassName(poolType);
-        switch (poolName.length()) {
+        switch (poolName.length()) { // 线程名 长度
             case 0:
                 return "unknown";
             case 1:
                 return poolName.toLowerCase(Locale.US);
             default:
                 if (Character.isUpperCase(poolName.charAt(0)) && Character.isLowerCase(poolName.charAt(1))) {
-                    return Character.toLowerCase(poolName.charAt(0)) + poolName.substring(1);
+                    return Character.toLowerCase(poolName.charAt(0)) + poolName.substring(1); // 首字母转换成小写
                 } else {
                     return poolName;
                 }
         }
     }
-
+    /** 创建默认的线程工厂 */
     public DefaultThreadFactory(String poolName, boolean daemon, int priority, ThreadGroup threadGroup) {
         if (poolName == null) {
             throw new NullPointerException("poolName");
@@ -92,7 +92,7 @@ public class DefaultThreadFactory implements ThreadFactory {
                     "priority: " + priority + " (expected: Thread.MIN_PRIORITY <= priority <= Thread.MAX_PRIORITY)");
         }
 
-        prefix = poolName + '-' + poolId.incrementAndGet() + '-';
+        prefix = poolName + '-' + poolId.incrementAndGet() + '-'; // 线程名前缀
         this.daemon = daemon;
         this.priority = priority;
         this.threadGroup = threadGroup;
