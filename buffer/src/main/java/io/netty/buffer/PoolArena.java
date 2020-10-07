@@ -52,7 +52,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
     final int directMemoryCacheAlignmentMask;
     private final PoolSubpage<T>[] tinySubpagePools;
     private final PoolSubpage<T>[] smallSubpagePools;
-
+    // 6个Chunk列表
     private final PoolChunkList<T> q050;
     private final PoolChunkList<T> q025;
     private final PoolChunkList<T> q000;
@@ -104,12 +104,12 @@ abstract class PoolArena<T> implements PoolArenaMetric {
             smallSubpagePools[i] = newSubpagePoolHead(pageSize);
         }
 
-        q100 = new PoolChunkList<T>(this, null, 100, Integer.MAX_VALUE, chunkSize);
-        q075 = new PoolChunkList<T>(this, q100, 75, 100, chunkSize);
-        q050 = new PoolChunkList<T>(this, q075, 50, 100, chunkSize);
-        q025 = new PoolChunkList<T>(this, q050, 25, 75, chunkSize);
-        q000 = new PoolChunkList<T>(this, q025, 1, 50, chunkSize);
-        qInit = new PoolChunkList<T>(this, q000, Integer.MIN_VALUE, 25, chunkSize);
+        q100 = new PoolChunkList<T>(this, null, 100, Integer.MAX_VALUE, chunkSize); // 内存使用率 100%
+        q075 = new PoolChunkList<T>(this, q100, 75, 100, chunkSize); // 内存使用率 75%~100%
+        q050 = new PoolChunkList<T>(this, q075, 50, 100, chunkSize); // 内存使用率 50%~100%
+        q025 = new PoolChunkList<T>(this, q050, 25, 75, chunkSize); // 内存使用率 25%~75%
+        q000 = new PoolChunkList<T>(this, q025, 1, 50, chunkSize); // 内存使用率 1%~50%
+        qInit = new PoolChunkList<T>(this, q000, Integer.MIN_VALUE, 25, chunkSize); // 内存使用率 0%~25%
 
         q100.prevList(q075);
         q075.prevList(q050);
@@ -219,15 +219,15 @@ abstract class PoolArena<T> implements PoolArenaMetric {
             return;
         }
         if (normCapacity <= chunkSize) {
-            if (cache.allocateNormal(this, buf, reqCapacity, normCapacity)) {
+            if (cache.allocateNormal(this, buf, reqCapacity, normCapacity)) { // 先在缓存上进行内存分配
                 // was able to allocate out of the cache so move on
-                return;
+                return; // 分配成功直接返回
             }
-            synchronized (this) {
+            synchronized (this) { // 内存分配
                 allocateNormal(buf, reqCapacity, normCapacity);
                 ++allocationsNormal;
             }
-        } else {
+        } else { // 大内存直接分配
             // Huge allocations are never served via the cache so just call allocateHuge
             allocateHuge(buf, reqCapacity);
         }

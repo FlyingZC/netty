@@ -107,8 +107,8 @@ final class PoolChunk<T> implements PoolChunkMetric {
 
     private static final int INTEGER_SIZE_MINUS_ONE = Integer.SIZE - 1;
 
-    final PoolArena<T> arena;
-    final T memory;
+    final PoolArena<T> arena; // 该 PoolChunk 所属的 PoolArena
+    final T memory; // 内存
     final boolean unpooled;
     final int offset;
     private final byte[] memoryMap;

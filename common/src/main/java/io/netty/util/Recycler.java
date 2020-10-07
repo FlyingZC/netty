@@ -193,7 +193,7 @@ public abstract class Recycler<T> {
     }
 
     protected abstract T newObject(Handle<T> handle);
-
+    // 负责buf回收
     public interface Handle<T> {
         void recycle(T object);
     }

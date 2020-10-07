@@ -22,8 +22,8 @@ final class PoolSubpage<T> implements PoolSubpageMetric {
     private final int memoryMapIdx;
     private final int runOffset;
     private final int pageSize;
-    private final long[] bitmap;
-
+    private final long[] bitmap; // 记录字节是否被分配.0-未分配;1-分配.
+    // 子页按照双向链表进行连接
     PoolSubpage<T> prev;
     PoolSubpage<T> next;
 

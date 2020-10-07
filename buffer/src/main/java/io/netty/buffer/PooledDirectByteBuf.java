@@ -37,8 +37,8 @@ final class PooledDirectByteBuf extends PooledByteBuf<ByteBuffer> {
     };
 
     static PooledDirectByteBuf newInstance(int maxCapacity) {
-        PooledDirectByteBuf buf = RECYCLER.get();
-        buf.reuse(maxCapacity);
+        PooledDirectByteBuf buf = RECYCLER.get(); // 从内存池中获取
+        buf.reuse(maxCapacity); // 设置引用计数器的值
         return buf;
     }
 

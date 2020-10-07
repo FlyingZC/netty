@@ -83,7 +83,7 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
             return false;
         }
 
-        for (PoolChunk<T> cur = head; cur != null; cur = cur.next) {
+        for (PoolChunk<T> cur = head; cur != null; cur = cur.next) { // 从head节点向后遍历
             if (cur.allocate(buf, reqCapacity, normCapacity)) {
                 if (cur.usage() >= maxUsage) {
                     remove(cur);

@@ -979,7 +979,7 @@ public final class PlatformDependent {
     }
 
     private static Throwable unsafeUnavailabilityCause0() {
-        if (isAndroid()) {
+        if (isAndroid()) { // android 不支持 Unsafe
             logger.debug("sun.misc.Unsafe: unavailable (Android)");
             return new UnsupportedOperationException("sun.misc.Unsafe: unavailable (Android)");
         }
